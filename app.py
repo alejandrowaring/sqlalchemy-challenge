@@ -1,8 +1,7 @@
-from re import L
 import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
-from sqlalchemy import create_engine, func
+from sqlalchemy import create_engine, func, inspect
 from flask import Flask, jsonify
 import datetime
 
@@ -23,9 +22,10 @@ def index():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/<start><br/>"
-        f"/api/v1.0/<start>/<end>"
+        f"/api/v1.0/&lt;start&gt;<br/>"
+        f"/api/v1.0/&lt;start&gt;/&lt;end&gt;"
     )
+
 @app.route('/api/v1.0/precipitation')
 def prcp():
     session = Session(engine)
@@ -59,12 +59,12 @@ def tobs():
     tobs_list = []
     latest_quer = session.query(Measurement.date).order_by(Measurement.date.desc()).first()[0]
     latest_date = datetime.datetime.strptime(latest_quer, date_format)
-    search_date = datetime.datetime.date(latest_date.year - 1, latest_date.month, latest_date.day)
+    search_date = latest_date - datetime.timedelta(days=365)
     for date, tobs in session.query(Measurement.date,Measurement.tobs).filter(Measurement.date >= search_date).all():
         tobs_dict = {}
         tobs_dict["date"] = date
         tobs_dict["tobs"] = tobs
-        tobs_list.append(tobs.dict)
+        tobs_list.append(tobs_dict)
     session.close()
     return jsonify(tobs_list)
 
@@ -95,4 +95,4 @@ def search_start_stop(start,end):
     return jsonify(search_list)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
