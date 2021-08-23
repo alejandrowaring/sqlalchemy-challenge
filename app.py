@@ -57,10 +57,13 @@ def stations():
 def tobs():
     session = Session(engine)
     tobs_list = []
+    most_active = session.query(Measurement.station, func.count(Measurement.date)).group_by(Measurement.station).order_by(func.count(Measurement.date).desc()).first()[0]
+    print(f"The most active station is {most_active}")
     latest_quer = session.query(Measurement.date).order_by(Measurement.date.desc()).first()[0]
     latest_date = datetime.datetime.strptime(latest_quer, date_format)
     search_date = latest_date - datetime.timedelta(days=365)
-    for date, tobs in session.query(Measurement.date,Measurement.tobs).filter(Measurement.date >= search_date).all():
+    print(f"Displaying results for dates between {search_date} and {latest_date}")
+    for date, tobs in session.query(Measurement.date,Measurement.tobs).filter(Measurement.station == most_active).filter(Measurement.date >= search_date).all():
         tobs_dict = {}
         tobs_dict["date"] = date
         tobs_dict["tobs"] = tobs
